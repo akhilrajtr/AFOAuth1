@@ -195,19 +195,19 @@ static const NSString *oauthVersion = @"1.0";
                                 withClientSecret:(NSString *)clientSecret
                                   andTokenSecret:(NSString *)tokenSecret
 {
-	
+    
     NSString *key = [self oauthGeneratePlaintextSignatureFor:baseString withClientSecret:clientSecret andTokenSecret:tokenSecret];
     
     const char *keyBytes = [key cStringUsingEncoding:NSUTF8StringEncoding];
     const char *baseStringBytes = [baseString cStringUsingEncoding:NSUTF8StringEncoding];
     unsigned char digestBytes[CC_SHA1_DIGEST_LENGTH];
     
-	CCHmacContext ctx;
+    CCHmacContext ctx;
     CCHmacInit(&ctx, kCCHmacAlgSHA1, keyBytes, strlen(keyBytes));
-	CCHmacUpdate(&ctx, baseStringBytes, strlen(baseStringBytes));
-	CCHmacFinal(&ctx, digestBytes);
+    CCHmacUpdate(&ctx, baseStringBytes, strlen(baseStringBytes));
+    CCHmacFinal(&ctx, digestBytes);
     
-	NSData *digestData = [NSData dataWithBytes:digestBytes length:CC_SHA1_DIGEST_LENGTH];
+    NSData *digestData = [NSData dataWithBytes:digestBytes length:CC_SHA1_DIGEST_LENGTH];
     return [digestData base64EncodedStringWithOptions:NSDataBase64Encoding64CharacterLineLength];
 }
 
@@ -245,8 +245,8 @@ static const NSString *oauthVersion = @"1.0";
     NSMutableArray *oauthParameters = [NSMutableArray array];
     
     // Add what we know now to the OAuth parameters
-    //    if (self.authenticationRealm)
-    //        [oauthParameters addObject:[NSDictionary dictionaryWithObjectsAndKeys:@"realm", @"key", self.authenticationRealm, @"value", nil]];
+    //	if (self.authenticationRealm)
+    [oauthParameters addObject:[NSDictionary dictionaryWithObjectsAndKeys:@"realm", @"key", [self oauthBaseStringURI], @"value", nil]];
     [oauthParameters addObject:[NSDictionary dictionaryWithObjectsAndKeys:@"oauth_version", @"key", oauthVersion, @"value", nil]];
     [oauthParameters addObject:[NSDictionary dictionaryWithObjectsAndKeys:@"oauth_consumer_key", @"key", clientIdentifier, @"value", nil]];
     if (tokenIdentifier != nil)
@@ -266,7 +266,8 @@ static const NSString *oauthVersion = @"1.0";
     NSString *signature;
     switch (signatureMethod) {
         case OAuthPlaintextSignatureMethod:
-            signature = [self oauthGeneratePlaintextSignatureFor:baseString withClientSecret:clientSecret andTokenSecret:tokenSecret];
+            signature = [[self oauthGeneratePlaintextSignatureFor:baseString withClientSecret:clientSecret andTokenSecret:tokenSecret] encodeForURL];
+            
             break;
         case OAuthHMAC_SHA1SignatureMethod:
             signature = [self oauthGenerateHMAC_SHA1SignatureFor:baseString withClientSecret:clientSecret andTokenSecret:tokenSecret];
